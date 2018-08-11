@@ -77,73 +77,42 @@ function yRenderAxes(newYScale, yAxis) {
 
 // function used for updating x circles group with a transition to
 // new circles
-function xRenderCircles(circlesGroup, newXScale, chosenXAxis) {
+function renderCircles(circlesGroup, textGroup, newXScale, chosenXAxis, newYScale, chosenYAxis) {
 
   circlesGroup.transition()
     .duration(1000)
-    .attr("cx", d => newXScale(d[chosenXAxis]));
-
-  return circlesGroup;
-}
-
-function xRenderText(textGroup, newXScale, chosenXAxis) {
-
-  textGroup.transition()
-    .duration(1000)
-    .attr("x", d => newXScale(d[chosenXAxis]));
-
-  return textGroup;
-}
-
-// function used for updating y circles group with a transition to
-// new circles
-function yRenderCircles(circlesGroup, newYScale, chosenYAxis) {
-  
-  circlesGroup.transition()
-    .duration(1000)
+    .attr("cx", d => newXScale(d[chosenXAxis]))
     .attr("cy", d => newYScale(d[chosenYAxis]));
 
-  return circlesGroup;
-}
-
-function yRenderText(textGroup, newYScale, chosenYAxis) {
-
   textGroup.transition()
     .duration(1000)
+    .attr("x", d => newXScale(d[chosenXAxis]))
     .attr("y", d => newYScale(d[chosenYAxis]));
 
-  return textGroup;
+  return circlesGroup;
 }
 
 // function used for updating circles group with new tooltip
-function xUpdateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
+function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup, textGroup) {
 
   if (chosenXAxis === "poverty") {
     var labelX = "Poverty:";
-    if (chosenYAxis === "obesity") {
-        var labelY = "Obesity:";}
-    else if (chosenYAxis === "smokes") {
-        var labelY = "Smokes:";}
-    else if (chosenYAxis === "healthcare") {
-        var labelY = "Healthcare:";}
   } 
   else if (chosenXAxis === "age") {
     var labelX = "Age:";
-    if (chosenYAxis === "obesity") {
-        var labelY = "Obesity:";}
-    else if (chosenYAxis === "smokes") {
-        var labelY = "Smokes:";}
-    else if (chosenYAxis === "healthcare") {
-        var labelY = "Healthcare:";}
   } 
-  else if (chosenXAxis === "income") {
+  else {
     var labelX = "Income:";
-    if (chosenYAxis === "obesity") {
-        var labelY = "Obesity:";}
-    else if (chosenYAxis === "smokes") {
-        var labelY = "Smokes:";}
-    else if (chosenYAxis === "healthcare") {
-        var labelY = "Healthcare:";}
+  }
+
+  if (chosenYAxis === "obesity") {
+    var labelY = "Obesity:";
+  } 
+  else if (chosenYAxis === "smokes") {
+    var labelY = "Smokes:";
+  } 
+  else {
+    var labelY = "Healthcare:";
   }
 
   var toolTip = d3.tip()
@@ -155,66 +124,15 @@ function xUpdateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
 
   circlesGroup.call(toolTip);
 
-  circlesGroup.on("mouseover", function(data) {
-    toolTip.show(data, this);
-  })
+  circlesGroup
+    .on("mouseover", function(data) {toolTip.show(data, this)})
+    .on("mouseout", function(data, index) {toolTip.hide(data)});
   // onmouseout event
-    .on("mouseout", function(data) {
-      toolTip.hide(data, this);
-    });
 
-  return circlesGroup;
-}
+  textGroup
+    .on("mouseover", function(data) {toolTip.show(data, this)})
+    .on("mouseout", function(data, index) {toolTip.hide(data)});
 
-
-
-// function used for updating circles group with new tooltip
-function yUpdateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
-
-  if (chosenYAxis === "obesity") {
-    var labelY = "Obesity:";
-    if (chosenXAxis === "poverty") {
-      var labelX = "Poverty:";}
-    else if (chosenXAxis === "age") {
-      var labelX = "Age:";}
-    else if (chosenXAxis === "income") {
-      var labelX = "Income:";}
-  } 
-  else if (chosenYAxis === "smokes") {
-    var labelY = "Smokes:";
-    if (chosenXAxis === "poverty") {
-      var labelX = "Poverty:";}
-    else if (chosenXAxis === "age") {
-      var labelX = "Age:";}
-    else if (chosenXAxis === "income") {
-      var labelX = "Income:";}
-  } 
-  else if (chosenYAxis === "healthcare") {
-    var labelY = "Healthcare:";
-    if (chosenXAxis === "obesity") {
-      var labelX = "Poverty:";}
-    else if (chosenXAxis === "age") {
-      var labelX = "Age:";}
-    else if (chosenXAxis === "income") {
-      var labelX = "Income:";}
-  }
-
-  var toolTip = d3.tip()
-    .attr("class", "d3-tip")
-    .offset([0,0])
-    .html(function(d) {
-      return (`${d.state}<br>${labelX} ${d[chosenXAxis]}<br>${labelY} ${d[chosenYAxis]}`);
-    });
-
-  circlesGroup.call(toolTip);
-
-  circlesGroup.on("mouseover", function(data) {
-    toolTip.show(data, this);
-  })
-  // onmouseout event
-    .on("mouseout", function(data) {
-      toolTip.hide(data, this);
-    });
 
   return circlesGroup;
 }
@@ -251,13 +169,11 @@ function successHandle(demData) {
 
   // append x axis
   var xAxis = chartGroup.append("g")
-    .classed("x-axis", true)
     .attr("transform", `translate(0, ${height})`)
     .call(bottomAxis);
 
   // append y axis
   var yAxis = chartGroup.append("g")
-    .classed("y-axis", true)
     .call(leftAxis);
 
   // append initial circles
@@ -340,19 +256,18 @@ function successHandle(demData) {
     .text("Lacks Healthcare (%)");
 
   // updateToolTip function above csv import
-  var circlesGroup = xUpdateToolTip(chosenXAxis, chosenYAxis, circlesGroup);
+  var circlesGroup = updateToolTip(chosenXAxis, chosenYAxis, circlesGroup, textGroup);
 
-  var circlesGroup = yUpdateToolTip(chosenXAxis, chosenYAxis, circlesGroup);
 
   // x axis labels event listener
   xLabelsGroup.selectAll("text")
     .on("click", function() {
       // get value of selection
-      var value = d3.select(this).attr("value");
-      if (value !== chosenXAxis) {
+      var xValue = d3.select(this).attr("value");
+      if (xValue !== chosenXAxis) {
 
         // replaces chosenXAxis with value
-        chosenXAxis = value;
+        chosenXAxis = xValue;
 
         // console.log(chosenXAxis)
 
@@ -364,12 +279,12 @@ function successHandle(demData) {
         xAxis = xRenderAxes(xLinearScale, xAxis);
 
         // updates circles with new x values
-        circlesGroup = xRenderCircles(circlesGroup, xLinearScale, chosenXAxis);
+        circlesGroup = renderCircles(circlesGroup, textGroup, xLinearScale, chosenXAxis, yLinearScale, chosenYAxis)
 
-        chartGroup = xRenderText(textGroup, xLinearScale, chosenXAxis);
+        // chartGroup = xRenderText(textGroup, xLinearScale, chosenXAxis);
 
         // updates tooltips with new info
-        circlesGroup = xUpdateToolTip(chosenXAxis, chosenYAxis, circlesGroup);
+        circlesGroup = updateToolTip(chosenXAxis, chosenYAxis, circlesGroup, textGroup);
 
         // changes classes to change bold text
         if (chosenXAxis === "poverty") {
@@ -411,12 +326,12 @@ function successHandle(demData) {
 // y axis labels event listener
   yLabelsGroup.selectAll("text")
     .on("click", function() {
-  // get value of selection
-      var value = d3.select(this).attr("value");
-      if (value !== chosenYAxis) {
+    // get value of selection
+      var yValue = d3.select(this).attr("value");
+      if (yValue !== chosenYAxis) {
 
         // replaces chosenXAxis with value
-        chosenYAxis = value;
+        chosenYAxis = yValue;
 
         console.log(chosenXAxis);
 
@@ -428,12 +343,12 @@ function successHandle(demData) {
         yAxis = yRenderAxes(yLinearScale, yAxis);
 
         // updates circles with new x values
-        circlesGroup = yRenderCircles(circlesGroup, yLinearScale, chosenYAxis);
+        circlesGroup = renderCircles(circlesGroup, textGroup, xLinearScale, chosenXAxis, yLinearScale, chosenYAxis)
 
-        circlesGroup = yRenderText(textGroup, yLinearScale, chosenYAxis);
+        // circlesGroup = yRenderText(textGroup, yLinearScale, chosenYAxis);
 
         // updates tooltips with new info
-        circlesGroup = yUpdateToolTip(chosenXAxis, chosenYAxis, circlesGroup);
+        circlesGroup = updateToolTip(chosenXAxis, chosenYAxis, circlesGroup, textGroup);
 
         // changes classes to change bold text
         if (chosenYAxis === "obesity") {
